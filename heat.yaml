@@ -1,0 +1,61 @@
+heat_template_version: 2013-05-23
+
+description: >
+  Based on Heat Wordpress example
+
+parameters:
+  mariadb_image:
+    type: string
+    description: The mariadb image
+    default: mariadb
+  wordpress_image:
+    type: string
+    description: The wordpress image
+    default: wordpress
+  flavor:
+    type: string
+    description: Flavor to use for the WordPress server.
+    constraints:
+      - custom_constraint: nova.flavor
+    default: m1.medium
+  MysqlRootPassword:
+    type: string
+    default: root
+
+resources:
+  Mariadb:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: mariadb_image }
+      flavor: { get_param: flavor }
+      user_data_format: SOFTWARE_CONFIG
+      key_name: goneri
+
+  MariadbConfig:
+    type: OS::Heat::StructuredConfig
+    properties:
+      group: os-apply-config
+      config:
+        mysql:
+          local_bind: true
+          root-password: {get_param: MysqlRootPassword}
+
+  MariadbDeployment:
+    type: OS::Heat::StructuredDeployment
+    properties:
+      signal_transport: NO_SIGNAL
+      config: {get_resource: MariadbConfig}
+      server: {get_resource: Mariadb}
+
+  Wordpress:
+    type: OS::Nova::Server
+    properties:
+      image: { get_param: wordpress_image }
+      flavor: { get_param: flavor }
+      user_data_format: SOFTWARE_CONFIG
+      key_name: goneri
+
+outputs:
+  ip_address:
+    description: IP address of the MariaDB server
+    value: {get_attr: [Mariadb, networks, ctlplane, 0]}
