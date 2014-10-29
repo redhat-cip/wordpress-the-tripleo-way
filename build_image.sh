@@ -15,10 +15,10 @@ repos="diskimage-builder tripleo-image-elements
     done
 )
 
-ELEMENTS_PATH=$PWD/repos/diskimage-builder/elements:\
+ELEMENTS_PATH=$PWD/elements:\
+$PWD/repos/diskimage-builder/elements:\
 $PWD/repos/heat-templates/hot/software-config/elements:\
-$PWD/repos/tripleo-image-elements/elements:\
-$PWD/elements
+$PWD/repos/tripleo-image-elements/elements:
 PATH=$PWD/repos/diskimage-builder/bin:$PWD/repos/dib-utils/bin:$PATH
 
 export ELEMENTS_PATH
@@ -26,17 +26,20 @@ export PATH
 
 
 
-#./repos/diskimage-builder/bin/disk-image-create -o mariadb \
-#    fedora \
-#    selinux-permissive \
-#    heat-cfntools \
-#    os-apply-config \
-#    os-collect-config \
-#    vm \
-#    stackuser \
-#    heat-config \
-#    heat-config-script \
-#    mariadb
+heat stack-delete wordpress
+./repos/diskimage-builder/bin/disk-image-create -o mariadb \
+    fedora \
+    selinux-permissive \
+    heat-cfntools \
+    os-apply-config \
+    os-collect-config \
+    vm \
+    stackuser \
+    heat-config \
+    heat-config-script \
+    mariadb-solo
+glance image-delete mariadb
+glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --container-format bare
 
 ./repos/diskimage-builder/bin/disk-image-create -o wordpress \
     fedora \
@@ -49,8 +52,8 @@ export PATH
     heat-config \
     heat-config-script \
     wordpress
-
-
-#glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --container-format bare
-
+glance image-delete wordpress
 glance image-create --name wordpress --disk-format qcow2 --file wordpress.qcow2 --container-format bare
+
+heat stack-create -f heat.yaml wordpress
+

@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+
+os-svc-enable -n mariadb
+service mariadb start

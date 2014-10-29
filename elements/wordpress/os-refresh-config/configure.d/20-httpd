@@ -1,0 +1,10 @@
+#!/bin/bash
+set -eux
+
+os-svc-enable -n httpd
+
+if service httpd status; then
+    service httpd reload
+else
+    service httpd restart
+fi

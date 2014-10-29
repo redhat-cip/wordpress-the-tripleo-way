@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eux
+
+pw=$(os-apply-config --key wordpress_db.password)
+host=$(os-apply-config --key wordpress_db.host --type netaddress)
+
+echo "CREATE USER 'wordpress'@'$host' IDENTIFIED BY '$pw';"|mysql -uroot
+echo "CREATE DATABASE wordpress;"|mysql -uroot
+echo "GRANT ALL PRIVILEGES ON wordpress.* TO 'wordpress'@'$host';"|mysql -uroot

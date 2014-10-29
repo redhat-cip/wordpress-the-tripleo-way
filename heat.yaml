@@ -23,6 +23,12 @@ parameters:
     default: root
 
 resources:
+  Wordpress_auth_string:
+    type: OS::Heat::RandomString
+
+  Wordpress_db_password:
+    type: OS::Heat::RandomString
+
   Mariadb:
     type: OS::Nova::Server
     properties:
@@ -36,9 +42,9 @@ resources:
     properties:
       group: os-apply-config
       config:
-        mysql:
-          local_bind: true
-          root-password: {get_param: MysqlRootPassword}
+        wordpress_db:
+          password: {get_resource: Wordpress_db_password}
+          host: {get_attr: [Wordpress, first_address]}
 
   MariadbDeployment:
     type: OS::Heat::StructuredDeployment
@@ -55,7 +61,37 @@ resources:
       user_data_format: SOFTWARE_CONFIG
       key_name: goneri
 
+  WordpressConfig:
+    type: OS::Heat::StructuredConfig
+    properties:
+      group: os-apply-config
+      config:
+        wordpress:
+          db_name: wordpress
+          db_user: wordpress
+          db_password: {get_resource: Wordpress_db_password}
+          db_host: {get_attr: [Mariadb, first_address]}
+          auth_string: {get_attr: [Wordpress_auth_string, value]}
+
+  WordpressDeployment:
+    type: OS::Heat::StructuredDeployment
+    properties:
+      signal_transport: NO_SIGNAL
+      config: {get_resource: WordpressConfig}
+      server: {get_resource: Wordpress}
+
 outputs:
-  ip_address:
-    description: IP address of the MariaDB server
-    value: {get_attr: [Mariadb, networks, ctlplane, 0]}
+  wordpress_url:
+    description: The URL to Wordpress
+    value:
+      str_replace:
+        template: http://host/wordpress/
+        params:
+          host: { get_attr: [ Wordpress, first_address ] }
+  install_url:
+    description: The URL to log into the deploy the application
+    value:
+      str_replace:
+        template: http://host/wordpress/wp-admin/install.php
+        params:
+          host: { get_attr: [ Wordpress, first_address ] }
