@@ -13,5 +13,5 @@
 3. inject the images in Glance
 4. call Heat
 
-    source ~/openrc
-    ./build_image.sh
+    > source ~/openrc
+    > ./build_image.sh
