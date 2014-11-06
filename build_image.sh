@@ -25,8 +25,12 @@ export ELEMENTS_PATH
 export PATH
 
 
+# Delete stack if already exist
+if [ `heat stack-list | grep wordpress | wc -l` -gt 0 ]; then
+	heat stack-delete wordpress
+fi
 
-heat stack-delete wordpress
+# Create MariaDB Image
 ./repos/diskimage-builder/bin/disk-image-create -o mariadb \
     fedora \
     selinux-permissive \
@@ -38,9 +42,16 @@ heat stack-delete wordpress
     heat-config \
     heat-config-script \
     mariadb-solo
-glance image-delete mariadb
+
+# If MariaDB Image exist then delete it
+if [ `glance image-list --name mariadb | grep mariadb | wc -l` -gt 0 ]; then
+	glance image-delete mariadb
+fi
+
+# Upload MariaDB Image
 glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --container-format bare
 
+# Create Wordpress Image
 ./repos/diskimage-builder/bin/disk-image-create -o wordpress \
     fedora \
     selinux-permissive \
@@ -52,8 +63,15 @@ glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --co
     heat-config \
     heat-config-script \
     wordpress
-glance image-delete wordpress
+
+# If Wordpress image exist then delete it
+if [ `glance image-list --name mariadb | grep mariadb | wc -l` -gt 0 ]; then
+	glance image-delete wordpress
+fi
+
+# Upload Wordpress Image
 glance image-create --name wordpress --disk-format qcow2 --file wordpress.qcow2 --container-format bare
 
+# Finally create the stack with uploaded images
 heat stack-create -f heat.yaml wordpress
 
