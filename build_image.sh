@@ -26,9 +26,7 @@ export PATH
 
 
 # Delete stack if already exist
-if [ `heat stack-list | grep wordpress | wc -l` -gt 0 ]; then
-	heat stack-delete wordpress
-fi
+heat stack-list | grep -q ' wordpress ' && heat stack-delete wordpress
 
 # Create MariaDB Image
 ./repos/diskimage-builder/bin/disk-image-create -o mariadb \
@@ -44,9 +42,7 @@ fi
     mariadb-solo
 
 # If MariaDB Image exist then delete it
-if [ `glance image-list --name mariadb | grep mariadb | wc -l` -gt 0 ]; then
-	glance image-delete mariadb
-fi
+glance image-list --name mariadb | grep -q 'mariadb' && glance image-delete mariadb
 
 # Upload MariaDB Image
 glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --container-format bare
@@ -65,9 +61,7 @@ glance image-create --name mariadb --disk-format qcow2 --file mariadb.qcow2 --co
     wordpress
 
 # If Wordpress image exist then delete it
-if [ `glance image-list --name mariadb | grep mariadb | wc -l` -gt 0 ]; then
-	glance image-delete wordpress
-fi
+glance image-list --name wordpress | grep -q 'wordpress' && glance image-delete wordpress
 
 # Upload Wordpress Image
 glance image-create --name wordpress --disk-format qcow2 --file wordpress.qcow2 --container-format bare
